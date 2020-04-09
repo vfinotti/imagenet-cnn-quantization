@@ -174,25 +174,27 @@ def eval_model(model, ds, n_sample=None, ngpu=1, is_imagenet=False):
     if is_imagenet:
         model = ModelWrapper(model)
     model = model.eval()
+    model = model.train(False)
     model = torch.nn.DataParallel(model, device_ids=range(ngpu)).cuda()
 
-    n_sample = len(ds) if n_sample is None else n_sample
-    for idx, (data, target) in enumerate(tqdm.tqdm(ds, total=n_sample)):
-        n_passed += len(data)
-        data =  Variable(torch.FloatTensor(data)).cuda()
-        indx_target = torch.LongTensor(target)
-        output = model(data)
-        bs = output.size(0)
-        idx_pred = output.data.sort(1, descending=True)[1]
+    with torch.no_grad():
+        n_sample = len(ds) if n_sample is None else n_sample
+        for idx, (data, target) in enumerate(tqdm.tqdm(ds, total=n_sample)):
+            n_passed += len(data)
+            data =  Variable(torch.FloatTensor(data)).cuda()
+            indx_target = torch.LongTensor(target)
+            output = model(data)
+            bs = output.size(0)
+            idx_pred = output.data.sort(1, descending=True)[1]
 
-        idx_gt1 = indx_target.expand(1, bs).transpose_(0, 1)
-        idx_gt5 = idx_gt1.expand(bs, 5)
+            idx_gt1 = indx_target.expand(1, bs).transpose_(0, 1)
+            idx_gt5 = idx_gt1.expand(bs, 5)
 
-        correct1 += idx_pred[:, :1].cpu().eq(idx_gt1).sum().item()
-        correct5 += idx_pred[:, :5].cpu().eq(idx_gt5).sum().item()
+            correct1 += idx_pred[:, :1].cpu().eq(idx_gt1).sum().item()
+            correct5 += idx_pred[:, :5].cpu().eq(idx_gt5).sum().item()
 
-        if idx >= n_sample - 1:
-            break
+            if idx >= n_sample - 1:
+                break
 
     acc1 = correct1 * 1.0 / n_passed
     acc5 = correct5 * 1.0 / n_passed
