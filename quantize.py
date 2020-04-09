@@ -2,13 +2,12 @@ import argparse
 from utils import misc, quant, selector
 import torch
 import torch.backends.cudnn as cudnn
-cudnn.benchmark =True
+cudnn.benchmark = True
 from collections import OrderedDict
 
 def main():
     parser = argparse.ArgumentParser(description='PyTorch SVHN Example')
-    parser.add_argument('--type', default='alexnet', help='|'.join(selector.known_models))
-    parser.add_argument('--quant_method', default='linear', help='linear|minmax|log|tanh')
+    parser.add_argument('--type', default='squeezenet_v1', help='|'.join(selector.known_models))
     parser.add_argument('--batch_size', type=int, default=50, help='input batch size for training (default: 64)')
     # parser.add_argument('--gpu', default=None, help='index of gpus to use')
     parser.add_argument('--ngpu', type=int, default=8, help='number of gpus to use')
@@ -64,16 +63,10 @@ def main():
             else:
                 bits = args.param_bits
 
-            if args.quant_method == 'linear':
-                sf = bits - 1. - quant.compute_integral_part(v, overflow_rate=args.overflow_rate)
-                v_quant  = quant.linear_quantize(v, sf, bits=bits)
-            elif args.quant_method == 'log':
-                v_quant = quant.log_minmax_quantize(v, bits=bits)
-            elif args.quant_method == 'minmax':
-                v_quant = quant.min_max_quantize(v, bits=bits)
-            else:
-                v_quant = quant.tanh_quantize(v, bits=bits)
+            temp_sf = quant.get_scalling_factor(v, overflow_rate=args.overflow_rate)
+            v_quant  = quant.linear_quantize(v, temp_sf, bits=args.param_bits, return_type='float')
             state_dict_quant[k] = v_quant
+            sf_dict[k] = temp_sf
             print(k, bits)
         model_raw.load_state_dict(state_dict_quant)
 

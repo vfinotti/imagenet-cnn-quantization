@@ -6,9 +6,8 @@ import math
 from IPython import embed
 
 def compute_integral_part(input, overflow_rate):
-    # abs_value = input.abs().view(-1)
-    # sorted_value = abs_value.sort(dim=0, descending=True)[0]
-    sorted_value = input.abs().view(-1).sort(dim=0, descending=True)[0]
+    abs_value = input.abs().view(-1)
+    sorted_value = abs_value.sort(dim=0, descending=True)[0]
     split_idx = int(overflow_rate * len(sorted_value))
     v = sorted_value[split_idx]
     if isinstance(v, Variable):
@@ -28,27 +27,48 @@ def get_scalling_factor(input, overflow_rate):
     split_idx = int(overflow_rate * len(sorted_value))
     # value at that index
     v = sorted_value[split_idx]
-    #print('v is {}'.format(v))
     if isinstance(v, Variable):
         v = v.data.cpu().numpy()
     # get the minimum ammount of bits required to represent the value chosen and consider it the
     # scaling factor. The '1e-12' is there to determine the smallest precision (if 'v' is too small)
     sf = math.ceil(math.log2(v+1e-12))
-    #print('sf is {}'.format(sf))
     return sf
 
-def linear_quantize(input, sf, bits):
+def linear_quantize(input, sf, bits, return_type='float'):
+    """Converts a float value from the real numbers domain to a float/int in the quantized domain"""
     assert bits >= 1, bits
     if bits == 1:
         return torch.sign(input) - 1
-    delta = math.pow(2.0, -sf)
-    bound = math.pow(2.0, bits-1)
+
+    # calculates min and maximum. Half of the possible quantized space is for positive number and half
+    # is for the negatives (that's why bound is 2^bits/2, or 2^(bits-1)). For 8 bits, the quantized
+    # number will be between [-128,127].
+    bound = math.pow(2.0, bits)/2 # half for positive, half for negative
     min_val = - bound
     max_val = bound - 1
-    rounded = torch.floor(input / delta + 0.5)
 
-    clipped_value = torch.clamp(rounded, min_val, max_val) * delta
-    return clipped_value
+    # We have "bits-1" to represent the positive numbers, and "bits-1" for the negative ones. Each of these
+    # intervals are bound to represent the scalling factor that better represents the maximum modulus
+    # of the input (2^sf). Therefore, we have "bits-1" bits to quantize the "2^sf" interval, and the
+    # quantized input is a consequence of that.
+    input_quant = torch.round(math.pow(2, bits-1) / math.pow(2,sf) * input)
+
+    # the quantized input should be limited by the maximum and minimum values according to our design
+    input_quant = torch.clamp(input_quant, min_val, max_val)
+
+    # calculate the output format base on the return type desired
+    assert return_type in ['float', 'int'], 'Return type should be \'float\' or \'int\'!'
+    if return_type == 'float':
+        # do the inverse operation, to return to the real domain number corresponding to
+        # the quantization level
+        input_quant = torch.clamp(input_quant, min_val, max_val) * (math.pow(2,sf) / math.pow(2, bits-1))
+    elif return_type == 'int':
+        input_quant = torch.clamp(input_quant, min_val, max_val)
+    else:
+        # format not supported, returning float
+        input_quant = torch.clamp(input_quant, min_val, max_val) * (math.pow(2,sf) / math.pow(2, bits-1))
+
+    return input_quant
 
 def log_minmax_quantize(input, bits):
     assert bits >= 1, bits
@@ -121,8 +141,11 @@ class LinearQuant(nn.Module):
     def forward(self, input):
         if self._counter > 0:
             self._counter -= 1
-            sf_new = self.bits - 1 - compute_integral_part(input, self.overflow_rate)
-            self.sf = min(self.sf, sf_new) if self.sf is not None else sf_new
+            # sf_new = self.bits - 1 - compute_integral_part(input, self.overflow_rate)
+            # self.sf = min(self.sf, sf_new) if self.sf is not None else sf_new
+            sf_new = get_scalling_factor(input, self.overflow_rate)
+            # get the biggest scalling factor, so no data is missed
+            self.sf = max(self.sf, sf_new) if self.sf is not None else sf_new
             return input
         else:
             output = linear_quantize(input, self.sf, self.bits)
