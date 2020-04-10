@@ -31,7 +31,6 @@ def main():
     args.model_root = misc.expand_user(args.model_root)
     args.data_root = misc.expand_user(args.data_root)
     args.input_size = 299 if 'inception' in args.type else args.input_size
-    assert args.quant_method in ['linear', 'minmax', 'log', 'tanh']
     print("=================FLAGS==================")
     for k, v in args.__dict__.items():
         print('{}: {}'.format(k, v))
@@ -84,8 +83,8 @@ def main():
 
     # print sf
     print(model_raw)
-    res_str = "type={}, quant_method={}, param_bits={}, bn_bits={}, fwd_bits={}, overflow_rate={}, acc1={:.4f}, acc5={:.4f}".format(
-        args.type, args.quant_method, args.param_bits, args.bn_bits, args.fwd_bits, args.overflow_rate, acc1, acc5)
+    res_str = "type={}, param_bits={}, bn_bits={}, fwd_bits={}, overflow_rate={}, acc1={:.4f}, acc5={:.4f}".format(
+        args.type, args.param_bits, args.bn_bits, args.fwd_bits, args.overflow_rate, acc1, acc5)
     print(res_str)
     with open('acc1_acc5.txt', 'a') as f:
         f.write(res_str + '\n')
