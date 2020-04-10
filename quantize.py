@@ -72,9 +72,9 @@ def main():
     # quantize forward activation
     if args.fwd_bits < 32:
         model_raw = quant.duplicate_model_with_quant(model_raw, bits=args.fwd_bits, overflow_rate=args.overflow_rate,
-                                                     counter=args.n_sample, type=args.quant_method)
+                                                     counter=args.n_sample)
         print(model_raw)
-        val_ds_tmp = ds_fetcher(10, data_root=args.data_root, train=False, input_size=args.input_size)
+        val_ds_tmp = ds_fetcher(args.n_sample, data_root=args.data_root, train=False, input_size=args.input_size)
         misc.eval_model(model_raw, val_ds_tmp, ngpu=1, n_sample=args.n_sample, is_imagenet=is_imagenet)
 
     # eval model
