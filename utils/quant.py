@@ -51,24 +51,27 @@ def linear_quantize(input, sf, bits, return_type='float'):
     # intervals are bound to represent the scalling factor that better represents the maximum modulus
     # of the input (2^sf). Therefore, we have "bits-1" bits to quantize the "2^sf" interval, and the
     # quantized input is a consequence of that.
-    input_quant = torch.round(math.pow(2, bits-1) / math.pow(2,sf) * input)
+    input.mul_(math.pow(2, bits-1)/math.pow(2,sf))
+    input.float().round_()
 
     # the quantized input should be limited by the maximum and minimum values according to our design
-    input_quant = torch.clamp(input_quant, min_val, max_val)
+    input.clamp_(min_val, max_val)
 
     # calculate the output format base on the return type desired
     assert return_type in ['float', 'int'], 'Return type should be \'float\' or \'int\'!'
     if return_type == 'float':
         # do the inverse operation, to return to the real domain number corresponding to
         # the quantization level
-        input_quant = torch.clamp(input_quant, min_val, max_val) * (math.pow(2,sf) / math.pow(2, bits-1))
+        input.clamp_(min_val, max_val)
+        input.mul_(math.pow(2,sf)/math.pow(2, bits-1))
     elif return_type == 'int':
-        input_quant = torch.clamp(input_quant, min_val, max_val)
+        input.clamp_(min_val, max_val)
     else:
         # format not supported, returning float
-        input_quant = torch.clamp(input_quant, min_val, max_val) * (math.pow(2,sf) / math.pow(2, bits-1))
+        input.clamp_(min_val, max_val)
+        input.mul_(math.pow(2,sf)/math.pow(2, bits-1))
 
-    return input_quant
+    return input
 
 def log_minmax_quantize(input, bits):
     assert bits >= 1, bits
