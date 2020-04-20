@@ -371,7 +371,7 @@ def duplicate_model_with_quant(model, bits, overflow_rate=0.0, counter=10, type=
     if isinstance(model, nn.Sequential):
         l = OrderedDict()
         for k, v in model._modules.items():
-            if isinstance(v, (nn.Conv2d, nn.Linear, nn.BatchNorm1d, nn.BatchNorm2d, nn.AvgPool2d)):
+            if isinstance(v, (nn.Linear, nn.BatchNorm1d, nn.BatchNorm2d, nn.AvgPool2d)):
                 l[k] = v
                 if type == 'linear':
                     quant_layer = LinearQuant('{}_quant'.format(k), bits=bits, overflow_rate=overflow_rate, counter=counter)
@@ -387,8 +387,43 @@ def duplicate_model_with_quant(model, bits, overflow_rate=0.0, counter=10, type=
                 l[k] = duplicate_model_with_quant(v, bits, overflow_rate, counter, type)
         m = nn.Sequential(l)
         return m
+    elif isinstance(model, nn.Conv2d):
+        in_channels = model.in_channels
+        out_channels = model.out_channels
+        kernel_size = model.kernel_size
+        stride = model.stride
+        padding = model.padding
+        dilation = model.dilation
+        groups = model.groups
+        padding_mode = model.padding_mode
+        m = Conv2dQuant(in_channels, out_channels, kernel_size, bits=bits,
+                        stride=stride, padding=padding, dilation=dilation,
+                        groups=groups, padding_mode=padding_mode,
+                        overflow_rate=overflow_rate, counter=counter)
+        m.weight = model.weight
+        m.bias = model.bias
+        return m
+    elif isinstance(model, squeezenet.Fire):
+        inplanes = model.inplanes
+        squeeze_planes = model.squeeze.out_channels
+        expand1x1_planes = model.expand1x1.out_channels
+        expand3x3_planes = model.expand3x3.out_channels
+
+        m = FireQuant(inplanes, squeeze_planes, expand1x1_planes,
+                      expand3x3_planes, bits, overflow_rate=overflow_rate,
+                      counter=counter)
+
+        # copy layers (with weights) to the quantized layer
+        m.squeeze_quant.weight = model.squeeze.weight
+        m.squeeze_quant.bias = model.squeeze.bias
+        m.expand1x1_quant.weight = model.expand1x1.weight
+        m.expand1x1_quant.bias = model.expand1x1.bias
+        m.expand3x3_quant.weight = model.expand3x3.weight
+        m.expand3x3_quant.bias = model.expand3x3.bias
+
+        return m
+
     else:
         for k, v in model._modules.items():
             model._modules[k] = duplicate_model_with_quant(v, bits, overflow_rate, counter, type)
         return model
-
