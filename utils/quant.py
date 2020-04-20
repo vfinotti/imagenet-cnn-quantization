@@ -30,7 +30,7 @@ def get_scalling_factor(input, overflow_rate):
     # value at that index
     v = sorted_value[split_idx]
     if isinstance(v, Variable):
-        v = v.data.cpu().numpy()
+        v = float(v.data)
     # get the minimum ammount of bits required to represent the value chosen and consider it the
     # scaling factor. The '1e-12' is there to determine the smallest precision (if 'v' is too small)
     sf = math.ceil(math.log2(v+1e-12))
