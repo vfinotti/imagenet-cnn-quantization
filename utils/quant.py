@@ -4,6 +4,8 @@ from torch import nn
 from collections import OrderedDict
 import math
 from IPython import embed
+import models
+from models import squeezenet
 
 def compute_integral_part(input, overflow_rate):
     abs_value = input.abs().view(-1)
