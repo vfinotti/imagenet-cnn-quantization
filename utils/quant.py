@@ -205,6 +205,28 @@ class NormalQuant(nn.Module):
     def __repr__(self):
         return '{}(bits={})'.format(self.__class__.__name__, self.bits)
 
+# Quantized Fire class
+class FireQuant(nn.Module):
+    def __init__(self, inplanes, squeeze_planes,
+                 expand1x1_planes, expand3x3_planes, bits, overflow_rate=0.0, counter=10):
+        super(FireQuant, self).__init__()
+        self.inplanes = inplanes
+        self.squeeze_quant = Conv2dQuant(inplanes, squeeze_planes,
+                                   kernel_size=1, bits=bits, overflow_rate=overflow_rate, counter=counter)
+        self.squeeze_activation = nn.ReLU(inplace=True)
+        self.expand1x1_quant = Conv2dQuant(squeeze_planes, expand1x1_planes,
+                                     kernel_size=1, bits=bits, overflow_rate=overflow_rate, counter=counter)
+        self.expand1x1_activation = nn.ReLU(inplace=True)
+        self.expand3x3_quant = Conv2dQuant(squeeze_planes, expand3x3_planes,
+                                     kernel_size=3, padding=1, bits=bits, overflow_rate=overflow_rate, counter=counter)
+        self.expand3x3_activation = nn.ReLU(inplace=True)
+    def forward(self, x):
+        x = self.squeeze_activation(self.squeeze_quant(x))
+        return torch.cat([
+            self.expand1x1_activation(self.expand1x1_quant(x)),
+            self.expand3x3_activation(self.expand3x3_quant(x))
+        ], 1)
+
 class Conv2dQuant(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size, bits, sf=None, stride=1,
                  padding=0, dilation=1, groups=1,
