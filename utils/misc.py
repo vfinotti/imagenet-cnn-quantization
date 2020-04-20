@@ -124,7 +124,7 @@ def md5(s):
     m.update(s)
     return m.hexdigest()
 
-def eval_model(model, ds, n_sample=None, ngpu=1, is_imagenet=False):
+def eval_model(model, ds, n_sample=None, ngpu=1, is_imagenet=False, cuda=True):
     import tqdm
     import torch
     from torch import nn
@@ -150,13 +150,19 @@ def eval_model(model, ds, n_sample=None, ngpu=1, is_imagenet=False):
         model = ModelWrapper(model)
     model = model.eval()
     model = model.train(False)
-    model = torch.nn.DataParallel(model, device_ids=range(ngpu)).cuda()
+    if cuda:
+        model = torch.nn.DataParallel(model, device_ids=range(ngpu)).cuda()
+    else:
+        model = model.cpu()
 
     with torch.no_grad():
         n_sample = len(ds) if n_sample is None else n_sample
         for idx, (data, target) in enumerate(tqdm.tqdm(ds, total=n_sample)):
             n_passed += len(data)
-            data =  Variable(torch.FloatTensor(data)).cuda()
+            if cuda:
+                data =  Variable(torch.FloatTensor(data)).cuda()
+            else:
+                data =  Variable(torch.FloatTensor(data)).cpu()
             indx_target = torch.LongTensor(target)
             output = model(data)
             bs = output.size(0)

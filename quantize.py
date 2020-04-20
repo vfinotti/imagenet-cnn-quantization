@@ -10,6 +10,9 @@ def main():
     parser.add_argument('--type', default='squeezenet_v1', help='|'.join(selector.known_models))
     parser.add_argument('--batch-size', type=int, default=1, help='input batch size for training')
     parser.add_argument('--ngpu', type=int, default=8, help='number of gpus to use')
+    parser.add_argument('--use-gpu', dest='use_gpu', action='store_true')
+    parser.add_argument('--use-cpu', dest='use_gpu', action='store_false')
+    parser.set_defaults(use_gpu=True)
     parser.add_argument('--seed', type=int, default=117, help='random seed')
     parser.add_argument('--model-root', default='~/.torch/models/', help='folder to save the model')
     parser.add_argument('--data-root', default='./datasets', help='folder to save the model')
@@ -22,8 +25,8 @@ def main():
     parser.add_argument('--overflow-rate', type=float, default=0.0, help='overflow rate')
     args = parser.parse_args()
 
-    # args.gpu = misc.auto_select_gpu(utility_bound=0, num_gpu=args.ngpu, selected_gpus=args.gpu)
-    # use_gpu = torch.cuda.is_available()
+    assert args.use_gpu in [False, True]
+    args.use_gpu = torch.cuda.is_available() if args.use_gpu else False
     args.ngpu = torch.cuda.device_count()
     misc.ensure_dir(args.logdir)
     args.model_root = misc.expand_user(args.model_root)
@@ -34,15 +37,12 @@ def main():
         print('{}: {}'.format(k, v))
     print("========================================")
 
-    # assert torch.cuda.is_available(), 'no cuda'
-    # if use_gpu:
     torch.cuda.manual_seed(args.seed)
     torch.manual_seed(args.seed)
 
     # load model and dataset fetcher
-    model_raw, ds_fetcher, is_imagenet = selector.select(args.type, model_root=args.model_root)
+    model_raw, ds_fetcher, is_imagenet = selector.select(args.type, model_root=args.model_root, cuda=args.use_gpu)
     args.ngpu = args.ngpu if is_imagenet else 1
-
 
     # quantize parameters
     if args.param_bits < 32:
@@ -72,12 +72,12 @@ def main():
         model_raw = quant.duplicate_model_with_quant(model_raw, bits=args.fwd_bits, overflow_rate=args.overflow_rate,
                                                      counter=args.n_sample)
         print(model_raw)
-        val_ds_tmp = ds_fetcher(args.n_sample, data_root=args.data_root, train=False, input_size=args.input_size)
-        misc.eval_model(model_raw, val_ds_tmp, ngpu=1, n_sample=args.n_sample, is_imagenet=is_imagenet)
+        val_ds_tmp = ds_fetcher(1, data_root=args.data_root, train=False, input_size=args.input_size)
+        misc.eval_model(model_raw, val_ds_tmp, ngpu=1, n_sample=args.n_sample, is_imagenet=is_imagenet, cuda=args.use_gpu)
 
     # eval model
     val_ds = ds_fetcher(args.batch_size, data_root=args.data_root, train=False, input_size=args.input_size)
-    acc1, acc5 = misc.eval_model(model_raw, val_ds, ngpu=args.ngpu, is_imagenet=is_imagenet)
+    acc1, acc5 = misc.eval_model(model_raw, val_ds, ngpu=args.ngpu, is_imagenet=is_imagenet, cuda=args.use_gpu)
 
     # print sf
     print(model_raw)
