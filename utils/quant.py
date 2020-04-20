@@ -205,6 +205,144 @@ class NormalQuant(nn.Module):
     def __repr__(self):
         return '{}(bits={})'.format(self.__class__.__name__, self.bits)
 
+class Conv2dQuant(nn.Module):
+    def __init__(self, in_channels, out_channels, kernel_size, bits, sf=None, stride=1,
+                 padding=0, dilation=1, groups=1,
+                 bias=True, padding_mode='zeros', overflow_rate=0.0, counter=10):
+
+        from torch._six import container_abcs
+        from itertools import repeat
+
+        def _ntuple(n):
+            def parse(x):
+                if isinstance(x, container_abcs.Iterable):
+                    return x
+                return tuple(repeat(x, n))
+            return parse
+
+        _single = _ntuple(1)
+        _pair = _ntuple(2)
+
+        super(Conv2dQuant, self).__init__()
+        self._counter = counter
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+        self.kernel_size = kernel_size
+        self.sf = sf
+        self.bits = bits
+        self.stride = _pair(stride)
+        self.padding = _pair(padding)
+        self.dilation = dilation
+        self.groups = groups
+        self.padding_mode = padding_mode
+        self.overflow_rate=overflow_rate
+        if in_channels % groups != 0:
+            raise ValueError('in_channels must be divisible by groups')
+        if out_channels % groups != 0:
+            raise ValueError('out_channels must be divisible by groups')
+        self.weight = torch.nn.parameter.Parameter(torch.Tensor(
+            out_channels, in_channels // groups, *_pair(kernel_size)))
+        if bias:
+            self.bias = torch.nn.parameter.Parameter(torch.Tensor(out_channels))
+        else:
+            self.register_parameter('bias', None)
+
+    def conv2d_quant_forward(self, input, weight, bias, stride, padding, dilation, groups, sf, bits):
+        if self.padding_mode == 'circular':
+            raise NameError('Conv2dQuant does not support circular padding')
+
+        in_samples, in_channels, in_height, in_width = input.shape
+        conv2d_filter_num, _, kernel_height, kernel_width = weight.shape
+
+        stride_height = stride[0]
+        stride_width = stride[1]
+        padding_height = padding[0]
+        padding_width = padding[1]
+
+        out_height = int((in_height - kernel_height + 2*padding_height)/stride_height) + 1
+        out_width = int((in_width - kernel_width + 2*padding_width)/stride_width) + 1
+
+        input_step = int(in_channels/groups)
+        weight_step = int(conv2d_filter_num/groups)
+        for i in range(groups):
+            input_group = input[:,i*input_step:(i+1)*input_step,:,:]
+            weight_group = weight[i*weight_step:(i+1)*weight_step,:,:,:]
+
+            inp_unf = torch.nn.functional.unfold(input_group, (kernel_height, kernel_width), dilation=dilation, padding=padding, stride=stride)
+
+            weight_t = weight_group.view(weight_group.size(0), -1).t()
+            inp_unf_t = inp_unf.transpose(1, 2)
+            inp_unf_t = inp_unf_t[:,:,:, None]
+            inp_unf_t_exp = inp_unf_t.transpose(2,3).repeat((1,1,weight_t.t().size(0),1))
+            weight_t_exp = weight_t.t().repeat((1,inp_unf_t.size(1),1,1))
+            inp_unf_t_exp.mul_(weight_t_exp)
+            out_unf = linear_quantize(inp_unf_t_exp, sf, bits)
+            out_unf = linear_quantize(torch.sum(out_unf, dim=3).transpose(1, 2), sf, bits)
+            if bias is not None:
+                out_unf = linear_quantize(out_unf + bias.view(-1, 1), sf, bits)
+
+            if i==0:
+                out = out_unf.view(in_samples, weight_step, out_height, out_width)
+            else:
+                out = torch.cat((out,out_unf.view(in_samples, weight_step, out_height, out_width)), dim=1)
+
+        return out
+
+    def conv2d_forward(self, input, weight, bias, stride, padding, dilation, groups):
+        if self.padding_mode == 'circular':
+            raise NameError('Conv2d does not support circular padding')
+
+        in_samples, in_channels, in_height, in_width = input.shape
+        conv2d_filter_num, _, kernel_height, kernel_width = weight.shape
+
+        stride_height = stride[0]
+        stride_width = stride[1]
+        padding_height = padding[0]
+        padding_width = padding[1]
+
+        out_height = int((in_height - kernel_height + 2*padding_height)/stride_height) + 1
+        out_width = int((in_width - kernel_width + 2*padding_width)/stride_width) + 1
+
+        input_step = int(in_channels/groups)
+        weight_step = int(conv2d_filter_num/groups)
+        for i in range(groups):
+            input_group = input[:,i*input_step:(i+1)*input_step,:,:]
+            weight_group = weight[i*weight_step:(i+1)*weight_step,:,:,:]
+            inp_unf = torch.nn.functional.unfold(input_group, (kernel_height, kernel_width), dilation=dilation, padding=padding, stride=stride)
+
+            if bias is None:
+                out_unf = (inp_unf.transpose(1, 2).matmul(weight_group.view(weight_group.size(0), -1).t())).transpose(1, 2)
+            else:
+                out_unf = (inp_unf.transpose(1, 2).matmul(weight_group.view(weight_group.size(0), -1).t()) + bias).transpose(1, 2)
+
+            if i==0:
+                out = out_unf.view(in_samples, weight_step, out_height, out_width)
+            else:
+                out = torch.cat((out,out_unf.view(in_samples, weight_step, out_height, out_width)), dim=1)
+
+        return out
+
+    @property
+    def counter(self):
+        return self._counter
+
+    def forward(self, input):
+        if self._counter > 0:
+            self._counter -= 1
+            output = self.conv2d_forward(input, self.weight, self.bias, self.stride, self.padding, self.dilation, self.groups)
+            sf_new = get_scalling_factor(output, self.overflow_rate)
+            # get the biggest scalling factor, so no data is missed
+            self.sf = max(self.sf, sf_new) if self.sf is not None else sf_new
+            return output
+        else:
+            output = self.conv2d_quant_forward(input, self.weight, self.bias, self.stride, self.padding, self.dilation, self.groups, self.sf, self.bits)
+            return output
+
+    def __repr__(self):
+        return '{}({}, {}, kernel_size={}, sf={}, bits={}, stride={}, padding={})'.format(
+            self.__class__.__name__, self.in_channels, self.out_channels,
+            self.kernel_size, self.sf, self.bits, self.stride, self.padding)
+
 def duplicate_model_with_quant(model, bits, overflow_rate=0.0, counter=10, type='linear'):
     """assume that original model has at least a nn.Sequential"""
     assert type in ['linear', 'minmax', 'log', 'tanh']
