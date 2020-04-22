@@ -10,6 +10,8 @@ known_models = [
     'squeezenet_v0', 'squeezenet_v1', # 224x224
     'inception_v3', # 299x299
     'mobilenet_v2', # 224x224
+    'alexnet_cifar10', # 32x32
+    'alexnet_cifar100', # 32x32
 ]
 
 def alexnet(cuda=True, model_root=None):
@@ -19,6 +21,22 @@ def alexnet(cuda=True, model_root=None):
     if cuda:
         m = m.cuda()
     return m, dataset_loader.get, True
+
+def alexnet_cifar10(cuda=True, model_root=None):
+    print("Building and initializing alexnet for Cifar 10 parameters")
+    from models import alexnet_cifar as alx
+    m = alx.alexnet_cifar10(True, model_root)
+    if cuda:
+        m = m.cuda()
+    return m, dataset_loader.get10, False
+
+def alexnet_cifar100(cuda=True, model_root=None):
+    print("Building and initializing alexnet for Cifar 100 parameters")
+    from models import alexnet_cifar as alx
+    m = alx.alexnet_cifar100(True, model_root)
+    if cuda:
+        m = m.cuda()
+    return m, dataset_loader.get100, False
 
 def vgg16(cuda=True, model_root=None):
     print("Building and initializing vgg16 parameters")
