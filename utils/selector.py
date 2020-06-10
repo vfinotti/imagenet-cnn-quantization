@@ -25,7 +25,7 @@ def alexnet(cuda=True, model_root=None):
 def alexnet_cifar10(cuda=True, model_root=None):
     print("Building and initializing alexnet for Cifar 10 parameters")
     from models import alexnet_cifar as alx
-    m = alx.alexnet_cifar10(True, model_root)
+    m = alx.alexnet_cifar10(True, model_root, cuda)
     if cuda:
         m = m.cuda()
     return m, dataset_loader.get10, False
@@ -33,7 +33,7 @@ def alexnet_cifar10(cuda=True, model_root=None):
 def alexnet_cifar100(cuda=True, model_root=None):
     print("Building and initializing alexnet for Cifar 100 parameters")
     from models import alexnet_cifar as alx
-    m = alx.alexnet_cifar100(True, model_root)
+    m = alx.alexnet_cifar100(True, model_root, cuda)
     if cuda:
         m = m.cuda()
     return m, dataset_loader.get100, False
