@@ -24,6 +24,7 @@ def get10(batch_size, data_root='./datasets', train=False, val=True, **kwargs):
     data_root = os.path.expanduser(os.path.join(data_root, 'cifar10-data'))
     num_workers = kwargs.setdefault('num_workers', 1)
     kwargs.pop('input_size', None)
+    input_size = 224
     print("Building CIFAR-10 data loader with {} workers".format(num_workers))
     ds = []
     if train:
@@ -31,21 +32,23 @@ def get10(batch_size, data_root='./datasets', train=False, val=True, **kwargs):
             datasets.CIFAR10(
                 root=data_root, train=True, download=True,
                 transform=transforms.Compose([
-                    transforms.Pad(4),
-                    transforms.RandomCrop(32),
+                    transforms.RandomResizedCrop(input_size),
                     transforms.RandomHorizontalFlip(),
                     transforms.ToTensor(),
-                    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+                    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
                 ])),
             batch_size=batch_size, shuffle=True, **kwargs)
+
         ds.append(train_loader)
     if val:
         test_loader = torch.utils.data.DataLoader(
             datasets.CIFAR10(
                 root=data_root, train=False, download=True,
                 transform=transforms.Compose([
+                    transforms.Resize(input_size),
+                    transforms.CenterCrop(input_size),
                     transforms.ToTensor(),
-                    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+                    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
                 ])),
             batch_size=batch_size, shuffle=False, **kwargs)
         ds.append(test_loader)
@@ -56,6 +59,7 @@ def get100(batch_size, data_root='./datasets', train=False, val=True, **kwargs):
     data_root = os.path.expanduser(os.path.join(data_root, 'cifar100-data'))
     num_workers = kwargs.setdefault('num_workers', 1)
     kwargs.pop('input_size', None)
+    input_size = 224
     print("Building CIFAR-100 data loader with {} workers".format(num_workers))
     ds = []
     if train:
@@ -63,11 +67,11 @@ def get100(batch_size, data_root='./datasets', train=False, val=True, **kwargs):
             datasets.CIFAR100(
                 root=data_root, train=True, download=True,
                 transform=transforms.Compose([
-                    transforms.Pad(4),
-                    transforms.RandomCrop(32),
+                    transforms.RandomResizedCrop(input_size),
                     transforms.RandomHorizontalFlip(),
                     transforms.ToTensor(),
-                    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+                    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+
                 ])),
             batch_size=batch_size, shuffle=True, **kwargs)
         ds.append(train_loader)
@@ -77,8 +81,10 @@ def get100(batch_size, data_root='./datasets', train=False, val=True, **kwargs):
             datasets.CIFAR100(
                 root=data_root, train=False, download=True,
                 transform=transforms.Compose([
+                    transforms.Resize(input_size),
+                    transforms.CenterCrop(input_size),
                     transforms.ToTensor(),
-                    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+                    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
                 ])),
             batch_size=batch_size, shuffle=False, **kwargs)
         ds.append(test_loader)

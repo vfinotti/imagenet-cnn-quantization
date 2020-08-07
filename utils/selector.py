@@ -10,8 +10,16 @@ known_models = [
     'squeezenet_v0', 'squeezenet_v1', # 224x224
     'inception_v3', # 299x299
     'mobilenet_v2', # 224x224
-    'alexnet_cifar10', # 32x32
-    'alexnet_cifar100', # 32x32
+    'alexnet_cifar10', # 224x224
+    'alexnet_cifar100', # 224x224
+    'squeezenet_v1_cifar10', # 224x224
+    'squeezenet_v1_cifar100', # 224x224
+    'resnet18_cifar10', # 224x224
+    'resnet18_cifar100', # 224x224
+    'resnet50_cifar10', # 224x224
+    'resnet50_cifar100', # 224x224
+    'mobilenet_v2_cifar10', # 224x224
+    'mobilenet_v2_cifar100', # 224x224
 ]
 
 def alexnet(cuda=True, model_root=None):
@@ -86,6 +94,22 @@ def resnet18(cuda=True, model_root=None):
         m = m.cuda()
     return m, dataset_loader.get, True
 
+def resnet18_cifar10(cuda=True, model_root=None):
+    print("Building and initializing resnet-18 for Cifar 10 parameters")
+    from models import resnet_cifar
+    m = resnet_cifar.resnet18_cifar10(True, model_root)
+    if cuda:
+        m = m.cuda()
+    return m, dataset_loader.get10, False
+
+def resnet18_cifar100(cuda=True, model_root=None):
+    print("Building and initializing resnet-18 for Cifar 100 parameters")
+    from models import resnet_cifar
+    m = resnet_cifar.resnet18_cifar100(True, model_root)
+    if cuda:
+        m = m.cuda()
+    return m, dataset_loader.get100, False
+
 def resnet34(cuda=True, model_root=None):
     print("Building and initializing resnet-34 parameters")
     from models import resnet
@@ -101,6 +125,22 @@ def resnet50(cuda=True, model_root=None):
     if cuda:
         m = m.cuda()
     return m, dataset_loader.get, True
+
+def resnet50_cifar10(cuda=True, model_root=None):
+    print("Building and initializing resnet-50 for Cifar 10 parameters")
+    from models import resnet_cifar
+    m = resnet_cifar.resnet50_cifar10(True, model_root)
+    if cuda:
+        m = m.cuda()
+    return m, dataset_loader.get10, False
+
+def resnet50_cifar100(cuda=True, model_root=None):
+    print("Building and initializing resnet-50 for Cifar 100 parameters")
+    from models import resnet_cifar
+    m = resnet_cifar.resnet50_cifar100(True, model_root)
+    if cuda:
+        m = m.cuda()
+    return m, dataset_loader.get100, False
 
 def resnet101(cuda=True, model_root=None):
     print("Building and initializing resnet-101 parameters")
@@ -134,6 +174,23 @@ def squeezenet_v1(cuda=True, model_root=None):
         m = m.cuda()
     return m, dataset_loader.get, True
 
+def squeezenet_v1_cifar10(cuda=True, model_root=None):
+    print("Building and initializing squeezenet_v1 for Cifar 10 parameters")
+    from models import squeezenet_cifar
+    m = squeezenet_cifar.squeezenet1_1_cifar10(True, model_root)
+    if cuda:
+        m = m.cuda()
+    return m, dataset_loader.get10, False
+
+def squeezenet_v1_cifar100(cuda=True, model_root=None):
+    print("Building and initializing squeezenet_v1 for Cifar 100 parameters")
+    from models import squeezenet_cifar
+    m = squeezenet_cifar.squeezenet1_1_cifar100(True, model_root)
+    if cuda:
+        m = m.cuda()
+    return m, dataset_loader.get100, False
+
+
 def mobilenet_v2(cuda=True, model_root=None):
     print("Building and initializing mobilenet_v2 parameters")
     from models import mobilenet
@@ -141,6 +198,22 @@ def mobilenet_v2(cuda=True, model_root=None):
     if cuda:
         m = m.cuda()
     return m, dataset_loader.get, True
+
+def mobilenet_v2_cifar10(cuda=True, model_root=None):
+    print("Building and initializing mobilenet_v2 for Cifar 10 parameters")
+    from models import mobilenet_cifar
+    m = mobilenet_cifar.mobilenet_v2_cifar10(True, model_root)
+    if cuda:
+        m = m.cuda()
+    return m, dataset_loader.get10, False
+
+def mobilenet_v2_cifar100(cuda=True, model_root=None):
+    print("Building and initializing mobilenet_v2 for Cifar 100 parameters")
+    from models import mobilenet_cifar
+    m = mobilenet_cifar.mobilenet_v2_cifar100(True, model_root)
+    if cuda:
+        m = m.cuda()
+    return m, dataset_loader.get100, False
 
 def select(model_name, **kwargs):
     assert model_name in known_models, f'Supported models are {known_models}'
