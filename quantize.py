@@ -19,9 +19,9 @@ def main():
     parser.add_argument('--logdir', default='log/default', help='folder to save to the log')
     parser.add_argument('--input-size', type=int, default=224, help='input size of image')
     parser.add_argument('--n-sample', type=int, default=20, help='number of samples to infer the scaling factor')
-    parser.add_argument('--param-bits', type=int, default=30, help='bit-width for parameters')
-    parser.add_argument('--bn-bits', type=int, default=30, help='bit-width for running mean and std')
-    parser.add_argument('--fwd-bits', type=int, default=30, help='bit-width for layer output')
+    parser.add_argument('--param-bits', type=int, default=16, help='bit-width for parameters')
+    parser.add_argument('--bn-bits', type=int, default=16, help='bit-width for running mean and std')
+    parser.add_argument('--fwd-bits', type=int, default=16, help='bit-width for layer output')
     parser.add_argument('--overflow-rate', type=float, default=0.0, help='overflow rate')
     args = parser.parse_args()
 

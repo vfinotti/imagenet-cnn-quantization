@@ -58,7 +58,7 @@ class AlexNet(nn.Module):
         x = self.classifier(x)
         return x
 
-def alexnet_cifar10(pretrained=False, progress=True, **kwargs):
+def alexnet_cifar10(pretrained=False, progress=True, cuda=True, **kwargs):
     r"""AlexNet model architecture from the
     `"One weird trick..." <https://arxiv.org/abs/1404.5997>`_ paper.
 
@@ -68,12 +68,17 @@ def alexnet_cifar10(pretrained=False, progress=True, **kwargs):
     """
     model = AlexNet(num_classes=10, **kwargs)
     if pretrained:
-        state_dict = load_state_dict_from_url(model_urls['alexnet_cifar10'],
-                                              progress=progress)
+        if cuda:
+            training_dict = load_state_dict_from_url(model_urls['alexnet_cifar10'],
+                                                     progress=progress)
+        else:
+            training_dict = load_state_dict_from_url(model_urls['alexnet_cifar10'],
+                                                     progress=progress,
+                                                     map_location="cpu")
         model.load_state_dict(state_dict)
     return model
 
-def alexnet_cifar100(pretrained=False, progress=True, **kwargs):
+def alexnet_cifar100(pretrained=False, progress=True, cuda=True, **kwargs):
     r"""AlexNet model architecture from the
     `"One weird trick..." <https://arxiv.org/abs/1404.5997>`_ paper.
 
@@ -83,7 +88,12 @@ def alexnet_cifar100(pretrained=False, progress=True, **kwargs):
     """
     model = AlexNet(num_classes=100, **kwargs)
     if pretrained:
-        state_dict = load_state_dict_from_url(model_urls['alexnet_cifar100'],
-                                              progress=progress)
+        if cuda:
+            training_dict = load_state_dict_from_url(model_urls['alexnet_cifar100'],
+                                                     progress=progress)
+        else:
+            training_dict = load_state_dict_from_url(model_urls['alexnet_cifar100'],
+                                                     progress=progress,
+                                                     map_location="cpu")
         model.load_state_dict(state_dict)
     return model
