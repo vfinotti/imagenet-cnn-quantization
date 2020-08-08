@@ -69,10 +69,10 @@ def alexnet_cifar10(pretrained=False, progress=True, cuda=True, **kwargs):
     model = AlexNet(num_classes=10, **kwargs)
     if pretrained:
         if cuda:
-            training_dict = load_state_dict_from_url(model_urls['alexnet_cifar10'],
+            state_dict = load_state_dict_from_url(model_urls['alexnet_cifar10'],
                                                      progress=progress)
         else:
-            training_dict = load_state_dict_from_url(model_urls['alexnet_cifar10'],
+            state_dict = load_state_dict_from_url(model_urls['alexnet_cifar10'],
                                                      progress=progress,
                                                      map_location="cpu")
         model.load_state_dict(state_dict)
@@ -89,10 +89,10 @@ def alexnet_cifar100(pretrained=False, progress=True, cuda=True, **kwargs):
     model = AlexNet(num_classes=100, **kwargs)
     if pretrained:
         if cuda:
-            training_dict = load_state_dict_from_url(model_urls['alexnet_cifar100'],
+            state_dict = load_state_dict_from_url(model_urls['alexnet_cifar100'],
                                                      progress=progress)
         else:
-            training_dict = load_state_dict_from_url(model_urls['alexnet_cifar100'],
+            state_dict = load_state_dict_from_url(model_urls['alexnet_cifar100'],
                                                      progress=progress,
                                                      map_location="cpu")
         model.load_state_dict(state_dict)

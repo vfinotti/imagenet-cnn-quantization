@@ -213,78 +213,98 @@ class ResNet(nn.Module):
         return self._forward_impl(x)
 
 
-def _resnet18_cifar10(arch, block, layers, pretrained, progress, **kwargs):
+def _resnet18_cifar10(arch, block, layers, pretrained, progress, cuda, **kwargs):
     num_classes=10
     model = ResNet(block, layers, num_classes=num_classes, **kwargs)
     if pretrained:
-        state_dict = load_state_dict_from_url(model_urls['resnet18_cifar10'],
-                                              progress=progress)
+        if cuda:
+            state_dict = load_state_dict_from_url(model_urls['resnet18_cifar10'],
+                                                  progress=progress)
+        else:
+            state_dict = load_state_dict_from_url(model_urls['resnet18_cifar10'],
+                                                  progress=progress,
+                                                  map_location='cpu')
         model.load_state_dict(state_dict)
     return model
 
-def _resnet18_cifar100(arch, block, layers, pretrained, progress, **kwargs):
+def _resnet18_cifar100(arch, block, layers, pretrained, progress, cuda, **kwargs):
     num_classes=100
     model = ResNet(block, layers, num_classes=num_classes, **kwargs)
     if pretrained:
-        state_dict = load_state_dict_from_url(model_urls['resnet18_cifar100'],
-                                              progress=progress)
+        if cuda:
+            state_dict = load_state_dict_from_url(model_urls['resnet18_cifar100'],
+                                                  progress=progress)
+        else:
+            state_dict = load_state_dict_from_url(model_urls['resnet18_cifar100'],
+                                                  progress=progress,
+                                                  map_location='cpu')
         model.load_state_dict(state_dict)
     return model
 
-def _resnet50_cifar10(arch, block, layers, pretrained, progress, **kwargs):
+def _resnet50_cifar10(arch, block, layers, pretrained, progress, cuda, **kwargs):
     num_classes=10
     model = ResNet(block, layers, num_classes=num_classes, **kwargs)
     if pretrained:
-        state_dict = load_state_dict_from_url(model_urls['resnet50_cifar10'],
-                                              progress=progress)
+        if cuda:
+            state_dict = load_state_dict_from_url(model_urls['resnet50_cifar10'],
+                                                  progress=progress)
+        else:
+            state_dict = load_state_dict_from_url(model_urls['resnet50_cifar10'],
+                                                  progress=progress,
+                                                  map_location='cpu')
         model.load_state_dict(state_dict)
     return model
 
-def _resnet50_cifar100(arch, block, layers, pretrained, progress, **kwargs):
+def _resnet50_cifar100(arch, block, layers, pretrained, progress, cuda, **kwargs):
     num_classes=100
     model = ResNet(block, layers, num_classes=num_classes, **kwargs)
     if pretrained:
-        state_dict = load_state_dict_from_url(model_urls['resnet50_cifar100'],
-                                              progress=progress)
+        if cuda:
+            state_dict = load_state_dict_from_url(model_urls['resnet50_cifar100'],
+                                                  progress=progress)
+        else:
+            state_dict = load_state_dict_from_url(model_urls['resnet50_cifar100'],
+                                                  progress=progress,
+                                                  map_location='cpu')
         model.load_state_dict(state_dict)
     return model
 
-def resnet18_cifar10(pretrained=False, progress=True, **kwargs):
+def resnet18_cifar10(pretrained=False, progress=True, cuda=True, **kwargs):
     r"""ResNet-18 model from
     `"Deep Residual Learning for Image Recognition" <https://arxiv.org/pdf/1512.03385.pdf>`_
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
         progress (bool): If True, displays a progress bar of the download to stderr
     """
-    return _resnet18_cifar10('resnet18', BasicBlock, [2, 2, 2, 2], pretrained, progress,
-                   **kwargs)
+    return _resnet18_cifar10('resnet18', BasicBlock, [2, 2, 2, 2], pretrained,
+                             progress, cuda, **kwargs)
 
-def resnet18_cifar100(pretrained=False, progress=True, **kwargs):
+def resnet18_cifar100(pretrained=False, progress=True, cuda=True, **kwargs):
     r"""ResNet-18 model from
     `"Deep Residual Learning for Image Recognition" <https://arxiv.org/pdf/1512.03385.pdf>`_
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
         progress (bool): If True, displays a progress bar of the download to stderr
     """
-    return _resnet18_cifar100('resnet18', BasicBlock, [2, 2, 2, 2], pretrained, progress,
-                   **kwargs)
+    return _resnet18_cifar100('resnet18', BasicBlock, [2, 2, 2, 2], pretrained,
+                              progress, cuda, **kwargs)
 
-def resnet50_cifar10(pretrained=False, progress=True, **kwargs):
+def resnet50_cifar10(pretrained=False, progress=True, cuda=True, **kwargs):
     r"""ResNet-50 model from
     `"Deep Residual Learning for Image Recognition" <https://arxiv.org/pdf/1512.03385.pdf>`_
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
         progress (bool): If True, displays a progress bar of the download to stderr
     """
-    return _resnet50_cifar10('resnet50', Bottleneck, [3, 4, 6, 3], pretrained, progress,
+    return _resnet50_cifar10('resnet50', Bottleneck, [3, 4, 6, 3], pretrained, progress, cuda,
                    **kwargs)
 
-def resnet50_cifar100(pretrained=False, progress=True, **kwargs):
+def resnet50_cifar100(pretrained=False, progress=True, cuda=True, **kwargs):
     r"""ResNet-50 model from
     `"Deep Residual Learning for Image Recognition" <https://arxiv.org/pdf/1512.03385.pdf>`_
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
         progress (bool): If True, displays a progress bar of the download to stderr
     """
-    return _resnet50_cifar100('resnet18', Bottleneck, [3, 4, 6, 3], pretrained, progress,
-                   **kwargs)
+    return _resnet50_cifar100('resnet18', Bottleneck, [3, 4, 6, 3], pretrained,
+                              progress, cuda, **kwargs)

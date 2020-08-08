@@ -103,27 +103,39 @@ class SqueezeNet(nn.Module):
         return torch.flatten(x, 1)
 
 
-def _squeezenet_cifar10(version, pretrained, progress, **kwargs):
+def _squeezenet_cifar10(version, pretrained, progress, cuda, **kwargs):
     num_classes = 10
     model = SqueezeNet(version, num_classes, **kwargs)
     if pretrained:
-        arch = 'squeezenet' + version
-        state_dict = load_state_dict_from_url(model_urls['squeezenet1_1_cifar10'],
-                                              progress=progress)
+        if cuda:
+            arch = 'squeezenet' + version
+            state_dict = load_state_dict_from_url(model_urls['squeezenet1_1_cifar10'],
+                                                  progress=progress)
+        else:
+            arch = 'squeezenet' + version
+            state_dict = load_state_dict_from_url(model_urls['squeezenet1_1_cifar10'],
+                                                  progress=progress,
+                                                  map_location='cpu')
         model.load_state_dict(state_dict)
     return model
 
-def _squeezenet_cifar100(version, pretrained, progress, **kwargs):
+def _squeezenet_cifar100(version, pretrained, progress, cuda, **kwargs):
     num_classes = 100
     model = SqueezeNet(version, num_classes, **kwargs)
     if pretrained:
-        arch = 'squeezenet' + version
-        state_dict = load_state_dict_from_url(model_urls['squeezenet1_1_cifar100'],
-                                              progress=progress)
+        if cuda:
+            arch = 'squeezenet' + version
+            state_dict = load_state_dict_from_url(model_urls['squeezenet1_1_cifar100'],
+                                                  progress=progress)
+        else:
+            arch = 'squeezenet' + version
+            state_dict = load_state_dict_from_url(model_urls['squeezenet1_1_cifar100'],
+                                                  progress=progress,
+                                                  map_location='cpu')
         model.load_state_dict(state_dict)
     return model
 
-def squeezenet1_1_cifar10(pretrained=False, progress=True, **kwargs):
+def squeezenet1_1_cifar10(pretrained=False, progress=True, cuda=True, **kwargs):
     r"""SqueezeNet 1.1 model from the `official SqueezeNet repo
     <https://github.com/DeepScale/SqueezeNet/tree/master/SqueezeNet_v1.1>`_.
     SqueezeNet 1.1 has 2.4x less computation and slightly fewer parameters
@@ -132,9 +144,9 @@ def squeezenet1_1_cifar10(pretrained=False, progress=True, **kwargs):
         pretrained (bool): If True, returns a model pre-trained on ImageNet
         progress (bool): If True, displays a progress bar of the download to stderr
     """
-    return _squeezenet_cifar10('1_1', pretrained, progress, **kwargs)
+    return _squeezenet_cifar10('1_1', pretrained, progress, cuda, **kwargs)
 
-def squeezenet1_1_cifar100(pretrained=False, progress=True, **kwargs):
+def squeezenet1_1_cifar100(pretrained=False, progress=True, cuda=True, **kwargs):
     r"""SqueezeNet 1.1 model from the `official SqueezeNet repo
     <https://github.com/DeepScale/SqueezeNet/tree/master/SqueezeNet_v1.1>`_.
     SqueezeNet 1.1 has 2.4x less computation and slightly fewer parameters
@@ -143,4 +155,4 @@ def squeezenet1_1_cifar100(pretrained=False, progress=True, **kwargs):
         pretrained (bool): If True, returns a model pre-trained on ImageNet
         progress (bool): If True, displays a progress bar of the download to stderr
     """
-    return _squeezenet_cifar100('1_1', pretrained, progress, **kwargs)
+    return _squeezenet_cifar100('1_1', pretrained, progress, cuda, **kwargs)

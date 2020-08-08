@@ -97,7 +97,7 @@ def resnet18(cuda=True, model_root=None):
 def resnet18_cifar10(cuda=True, model_root=None):
     print("Building and initializing resnet-18 for Cifar 10 parameters")
     from models import resnet_cifar
-    m = resnet_cifar.resnet18_cifar10(True, model_root)
+    m = resnet_cifar.resnet18_cifar10(True, model_root, cuda)
     if cuda:
         m = m.cuda()
     return m, dataset_loader.get10, False
@@ -105,7 +105,7 @@ def resnet18_cifar10(cuda=True, model_root=None):
 def resnet18_cifar100(cuda=True, model_root=None):
     print("Building and initializing resnet-18 for Cifar 100 parameters")
     from models import resnet_cifar
-    m = resnet_cifar.resnet18_cifar100(True, model_root)
+    m = resnet_cifar.resnet18_cifar100(True, model_root, cuda)
     if cuda:
         m = m.cuda()
     return m, dataset_loader.get100, False
@@ -129,7 +129,7 @@ def resnet50(cuda=True, model_root=None):
 def resnet50_cifar10(cuda=True, model_root=None):
     print("Building and initializing resnet-50 for Cifar 10 parameters")
     from models import resnet_cifar
-    m = resnet_cifar.resnet50_cifar10(True, model_root)
+    m = resnet_cifar.resnet50_cifar10(True, model_root, cuda)
     if cuda:
         m = m.cuda()
     return m, dataset_loader.get10, False
@@ -137,7 +137,7 @@ def resnet50_cifar10(cuda=True, model_root=None):
 def resnet50_cifar100(cuda=True, model_root=None):
     print("Building and initializing resnet-50 for Cifar 100 parameters")
     from models import resnet_cifar
-    m = resnet_cifar.resnet50_cifar100(True, model_root)
+    m = resnet_cifar.resnet50_cifar100(True, model_root, cuda)
     if cuda:
         m = m.cuda()
     return m, dataset_loader.get100, False
@@ -177,7 +177,7 @@ def squeezenet_v1(cuda=True, model_root=None):
 def squeezenet_v1_cifar10(cuda=True, model_root=None):
     print("Building and initializing squeezenet_v1 for Cifar 10 parameters")
     from models import squeezenet_cifar
-    m = squeezenet_cifar.squeezenet1_1_cifar10(True, model_root)
+    m = squeezenet_cifar.squeezenet1_1_cifar10(True, model_root, cuda)
     if cuda:
         m = m.cuda()
     return m, dataset_loader.get10, False
@@ -185,7 +185,7 @@ def squeezenet_v1_cifar10(cuda=True, model_root=None):
 def squeezenet_v1_cifar100(cuda=True, model_root=None):
     print("Building and initializing squeezenet_v1 for Cifar 100 parameters")
     from models import squeezenet_cifar
-    m = squeezenet_cifar.squeezenet1_1_cifar100(True, model_root)
+    m = squeezenet_cifar.squeezenet1_1_cifar100(True, model_root, cuda)
     if cuda:
         m = m.cuda()
     return m, dataset_loader.get100, False
@@ -202,7 +202,7 @@ def mobilenet_v2(cuda=True, model_root=None):
 def mobilenet_v2_cifar10(cuda=True, model_root=None):
     print("Building and initializing mobilenet_v2 for Cifar 10 parameters")
     from models import mobilenet_cifar
-    m = mobilenet_cifar.mobilenet_v2_cifar10(True, model_root)
+    m = mobilenet_cifar.mobilenet_v2_cifar10(True, model_root, cuda)
     if cuda:
         m = m.cuda()
     return m, dataset_loader.get10, False
@@ -210,7 +210,7 @@ def mobilenet_v2_cifar10(cuda=True, model_root=None):
 def mobilenet_v2_cifar100(cuda=True, model_root=None):
     print("Building and initializing mobilenet_v2 for Cifar 100 parameters")
     from models import mobilenet_cifar
-    m = mobilenet_cifar.mobilenet_v2_cifar100(True, model_root)
+    m = mobilenet_cifar.mobilenet_v2_cifar100(True, model_root, cuda)
     if cuda:
         m = m.cuda()
     return m, dataset_loader.get100, False
@@ -223,5 +223,3 @@ def select(model_name, **kwargs):
 if __name__ == '__main__':
     m1 = alexnet()
     embed()
-
-

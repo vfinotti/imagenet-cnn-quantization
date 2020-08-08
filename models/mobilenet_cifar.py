@@ -160,7 +160,7 @@ class MobileNetV2(nn.Module):
         return self._forward_impl(x)
 
 
-def mobilenet_v2_cifar10(pretrained=False, progress=True, **kwargs):
+def mobilenet_v2_cifar10(pretrained=False, progress=True, cuda=True, **kwargs):
     """
     Constructs a MobileNetV2 architecture from
     `"MobileNetV2: Inverted Residuals and Linear Bottlenecks" <https://arxiv.org/abs/1801.04381>`_.
@@ -171,12 +171,17 @@ def mobilenet_v2_cifar10(pretrained=False, progress=True, **kwargs):
     num_classes = 10
     model = MobileNetV2(num_classes=num_classes, **kwargs)
     if pretrained:
-        state_dict = load_state_dict_from_url(model_urls['mobilenet_v2_cifar10'],
+        if cuda:
+            state_dict = load_state_dict_from_url(model_urls['mobilenet_v2_cifar10'],
                                               progress=progress)
+        else:
+            state_dict = load_state_dict_from_url(model_urls['mobilenet_v2_cifar10'],
+                                                  progress=progress,
+                                                  map_location='cpu')
         model.load_state_dict(state_dict)
     return model
 
-def mobilenet_v2_cifar100(pretrained=False, progress=True, **kwargs):
+def mobilenet_v2_cifar100(pretrained=False, progress=True, cuda=True, **kwargs):
     """
     Constructs a MobileNetV2 architecture from
     `"MobileNetV2: Inverted Residuals and Linear Bottlenecks" <https://arxiv.org/abs/1801.04381>`_.
@@ -187,7 +192,12 @@ def mobilenet_v2_cifar100(pretrained=False, progress=True, **kwargs):
     num_classes = 100
     model = MobileNetV2(num_classes=num_classes, **kwargs)
     if pretrained:
-        state_dict = load_state_dict_from_url(model_urls['mobilenet_v2_cifar100'],
+        if cuda:
+            state_dict = load_state_dict_from_url(model_urls['mobilenet_v2_cifar100'],
                                               progress=progress)
+        else:
+            state_dict = load_state_dict_from_url(model_urls['mobilenet_v2_cifar100'],
+                                                  progress=progress,
+                                                  map_location='cpu')
         model.load_state_dict(state_dict)
     return model
